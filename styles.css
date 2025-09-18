@@ -95,3 +95,6 @@ div.quarto-figure {
   margin-bottom: 40px;
 }
 
+    .justificar-texto {
+        text-align: justify;
+    }
