@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Time Series Analysis of bTB Cases in Ireland",
     "section": "",
-    "text": "This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.\nThe main objectives are:\n1. To describe overall trends and seasonal patterns of bTB incidence.\n2. To compare different time series forecasting models.\n3. To explore subgroup dynamics by herd type and test type.\n4. To provide insights that may support monitoring and policy decisions.",
+    "text": "This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.  (more details)\nThe main objectives are:\n1. To describe overall trends and seasonal patterns of bTB incidence.\n2. To compare different time series forecasting models.\n3. To explore subgroup dynamics by herd type and test type.\n4. To provide insights that may support monitoring and policy decisions.",
     "crumbs": [
       "Introduction"
     ]

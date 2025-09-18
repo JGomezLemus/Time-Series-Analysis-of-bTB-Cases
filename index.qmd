@@ -6,7 +6,8 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 
 # Introduction
 
-This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.\
+This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.\ 
+(more details)\
 The main objectives are:\
 1. To describe overall trends and seasonal patterns of bTB incidence.\
 2. To compare different time series forecasting models.\
