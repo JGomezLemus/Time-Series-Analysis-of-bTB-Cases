@@ -1,0 +1,48 @@
+
+title: "Temporal trends in bovine herds and bovine tuberculosis breakdowns in Ireland (add years)"
+author: Jessica Gomez Lemus
+date: ""
+project:
+  type: website
+    
+# Website configuration
+website:
+  sidebar:
+    style: "floating"
+    search: true
+    contents:
+      - text: "Introduction"
+        href: index.qmd
+      - section: "Methods"
+        contents:
+          - text: "Data"
+            href: index.qmd#data
+          - text: "Analytical Workflow"
+            href: index.qmd#analytical-workflow
+      - section: "Results"
+        contents:
+          - text: "Data Exploration"
+            href: index.qmd#data-preparation-and-exploration
+          - text: "Modeling and Forecasting"
+            href: index.qmd#modeling-and-forecasting
+          - text: "Analysis by Subgroups"
+            href: index.qmd#subgroup-analysis
+
+format:
+  html:
+    theme: flatly
+    css: styles.css
+    page-layout: full
+    toc: false
+    code-fold: true
+    self-contained: true 
+
+
+# Global execution options
+execute:
+  cache: false
+  root-dir: "C:/Rstudio Projects/CVERA/btb_time_series_project"
+  warning: false   # Hide warnings globally
+  message: false   # Hide package messages globally
+
+      

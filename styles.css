@@ -1,0 +1,97 @@
+/* ===========================
+   Figcaption
+=========================== */
+figcaption {
+  margin: auto;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #2c3e50;
+}
+
+/* ===========================
+   Body y enlaces
+=========================== */
+body {
+  color: #2c3e50;        /* texto principal */
+  background-color: #ffffff;  /* fondo */
+  font-family: "Arial", sans-serif;
+}
+
+a {
+  color: #18bc9c;        /* links */
+  text-decoration: none;
+}
+
+a:hover {
+  color: #148f77;        /* hover links */
+  text-decoration: underline;
+}
+
+/* ===========================
+   Botones
+=========================== */
+.btn, .btn-primary {
+  background-color: #2c3e50;  /* color principal */
+  color: #ffffff;
+  border: none;
+}
+
+.btn:hover, .btn-primary:hover {
+  background-color: #34495e;  /* hover */
+}
+
+/* ===========================
+   Tablas
+=========================== */
+table {
+  background-color: #ecf0f1;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th {
+  background-color: #d5dbdb;
+  font-weight: bold;
+  padding: 8px;
+}
+
+table td {
+  background-color: #ecf0f1;
+  padding: 8px;
+}
+
+table tr:hover td {
+  background-color: #bdc3c7;
+}
+
+/* ===========================
+   Código y bloques de código
+=========================== */
+pre, code {
+  color: #e74c3c;
+  background-color: #f8f9fa;
+  font-family: "Courier New", monospace;
+}
+
+pre {
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+/* ===========================
+   Gráficos
+=========================== */
+img.quarto-figure {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Margen superior e inferior para separar de tablas u otros elementos */
+div.quarto-figure {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+

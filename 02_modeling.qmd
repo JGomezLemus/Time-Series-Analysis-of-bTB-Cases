@@ -1,0 +1,74 @@
+---
+title: "Modeling"
+format: html
+---
+
+# 1. Load Data
+
+```{r}
+
+source("R_files/01_libraries.R")
+source("R_files/02_data.R")
+
+```
+
+# 2. Prepare Data for Modeling
+
+This section presents the time series modeling and forecasting for bTB cases in Ireland. All models were fitted previously in an external R script and saved for reproducibility (add link)
+
+```{r}
+
+train <- cases_tsibble %>%
+  filter(year_month <= yearmonth("2023 Dec"))
+
+test <- cases_tsibble %>%
+  filter(year_month >= yearmonth("2024 Jan"))
+
+```
+
+# 3. Forecast vs Actual Plot
+
+```{r}
+# Load saved forecast plot
+knitr::include_graphics("figures/forecast_plot.png")
+```
+
+# 4. Model Comparison Table
+
+```{r}
+
+fit_models <- readRDS("results/fit_models.rds")
+cv_accuracy_summary <- read_csv("results/cv_accuracy_summary.csv")
+
+metrics <- fit_models %>%
+  glance() %>%
+  select(.model, AIC, BIC, sigma2)
+
+final_summary <- left_join(metrics, cv_accuracy_summary, by = ".model")
+
+# Ljung-Box test for residuals
+res_ets   <- fit_models %>% select(ets)   %>% augment()
+res_arima <- fit_models %>% select(arima) %>% augment()
+res_arima_log <- fit_models %>% select(arima_log) %>% augment()
+
+p_values <- tibble(
+  Model = c("ets", "arima", "arima_log"),
+  `p-value Ljung-Box` = c(
+    Box.test(res_ets$.resid, lag = 20, type = "Ljung-Box")$p.value,
+    Box.test(res_arima$.resid, lag = 20, type = "Ljung-Box")$p.value,
+    Box.test(res_arima_log$.resid, lag = 20, type = "Ljung-Box")$p.value
+  )
+)
+
+final_table <- head(left_join(final_summary, p_values, by = c(".model" = "Model")),-2)
+
+
+final_table %>%
+  arrange(RMSE) %>%
+  kable(caption = "Model Comparison Metrics", digits = 2,
+        col.names = c("Model", "AIC", "BIC","sigma2","RMSE", "MAPE", "MAE", "p-value Ljung-Box")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+# 

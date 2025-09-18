@@ -1,0 +1,76 @@
+---
+title: "Data Exploration"
+format:
+  html:
+    code-fold: true
+    theme: flatly
+    toc: true
+    toc-location: left
+  docx:
+    toc: true
+execute:
+  cache: false
+knitr:
+  opts_knit:
+    root.dir: "C:/Rstudio Projects/CVERA/btb_time_series_project"
+---
+
+# 1. Load and Prepare Data
+
+```{r}
+
+source("R_files/01_libraries.R")
+source("R_files/02_data.R")
+
+
+
+```
+
+# 2. General trend over time
+
+```{r}
+
+avg_per_month <- cases_per_month %>%
+  group_by(month) %>%
+  summarise(avg_cases = mean(num_cases), .groups = "drop")
+
+ggplot(cases_per_month, aes(x = year_month, y = num_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Trend bTB Cases", x = "Month", y = "Number of cases") +
+  theme_minimal()
+
+```
+
+# 3. Seasonality by Month
+
+```{r}
+ggplot(cases_per_month, aes(x = year, y = num_cases, group = 1)) +
+  geom_line() +
+  geom_point(size = 1) +
+  geom_hline(
+    data = avg_per_month,
+    aes(yintercept = avg_cases),
+    linetype = "solid",
+    color = "blue"
+  ) +
+  facet_grid(. ~ month, scales = "free_x", space = "free") +
+  labs(
+    title = glue::glue(
+      "Seasonality of bTB by month (2008-{max(cases_per_month$year)})"
+    ),
+    #add years auto
+    x = "Year",
+    y = "No. of bTB cases"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.background = element_rect(fill = "grey90", color = NA),
+    strip.text = element_text(size = 12, face = "bold"),
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1,
+      face = "bold"
+    )
+  )
+```

@@ -1,0 +1,416 @@
+---
+title: "Time Series Analysis of bTB Cases in Ireland"
+author: "Jessica Gomez Lemus"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+# Introduction
+
+This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.\
+The main objectives are:\
+1. To describe overall trends and seasonal patterns of bTB incidence.\
+2. To compare different time series forecasting models.\
+3. To explore subgroup dynamics by herd type and test type.\
+4. To provide insights that may support monitoring and policy decisions.
+
+# Methods
+
+## Data
+
+Monthly counts of bovine Tuberculosis (bTB) cases in Ireland were compiled for the period 2008–2024 (add year auto). A case was defined as any animal testing positive under one of the three diagnostic procedures routinely implemented during the study period. Data were aggregated to obtain national-level monthly totals. Records with missing or “unknown” herd or test classifications were excluded from subgroup analyses but retained in the total-case series.
+
+## Analytical workflow
+
+1- **Data preparation** Cases were aggregated by month across all test types. In subgroup analyses, incomplete herd/test categories were excluded.
+
+2- **Exploratory analysis** Long-term trends and seasonal variation were visualized. Seasonal-trend decomposition using locally estimated scatterplot smoothing (STL) was applied to separate the trend, seasonal, and irregular components.
+
+3- **Time-Series Modeling** The dataset was split into a training set (2008–2023) and a test set (2024) to evaluate out-of-sample predictive performance. Candidate models included autoregressive integrated moving average (ARIMA) and exponential smoothing state space models (ETS), each fitted with and without log transformation. Model performance was evaluated using Akaike Information Criterion (AIC), Bayesian Information Criterion (BIC), root mean squared error (RMSE), mean absolute error (MAE), and mean absolute percentage error (MAPE). Residual independence was assessed via Ljung–Box tests. Time-series cross-validation was employed to compare forecasting accuracy across candidate models.
+
+4- **Forecasting** Using models fitted on the 2008–2023 training period, forecasts were generated 12 months ahead for 2024 at the national total-case level (add auto). Subgroup forecasts stratified by herd type (Dairy, Beef Store + Fattener, Mixed) were also produced. Hierarchical reconciliation methods (bottom-up, ordinary least squares \[OLS\], and minimum trace \[MinT\]) were applied to ensure coherence between subgroup and aggregate forecasts.
+
+5- **Software** : All analyses were performed in R version 4.4.2 (R Core Team, 2024). Time-series methods were implemented using the forecast and fpp3 packages.
+
+# 1. Data Preparation and Exploration
+
+## 1.1 Load and prepare the data
+
+```{r}
+
+# Load required libraries and data preparation scripts
+source("R_files/01_libraries.R")
+source("R_files/02_data.R")
+
+```
+
+# 1.2 General trend of bTB cases
+
+This figure shows the overall monthly trend of bTB cases. A declining pattern is observed until 2015, followed by an increase from 2018 onward.
+
+```{r}
+
+# Calculate average number of cases per month
+avg_per_month <- cases_per_month %>%
+  group_by(month) %>%
+  summarise(avg_cases = mean(num_cases), .groups = "drop")
+
+# Plot overall trend of bTB cases over time
+ggplot(cases_per_month, aes(x = year_month, y = num_cases)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Trend bTB Cases", x = "Month", y = "Number of cases") +
+  theme_minimal()
+
+```
+
+# 1.3 Seasonality by month
+
+This visualization highlights seasonal variation by month across years.
+
+```{r}
+
+cases_per_month <- cases_per_month %>%
+  mutate(month = factor(month, levels = 1:12, labels = month.abb))
+
+avg_per_month <- avg_per_month %>%
+  mutate(month = factor(month, levels = 1:12, labels = month.abb))
+
+
+# Plot seasonality of bTB cases by month
+ggplot(cases_per_month, aes(x = year, y = num_cases, group = 1)) +
+  geom_line() +
+  geom_point(size = 1) +
+  geom_hline(
+    data = avg_per_month,
+    aes(yintercept = avg_cases),
+    linetype = "solid",
+    color = "blue"
+  ) +
+  facet_grid(. ~ month, scales = "free_x", space = "free") +
+  labs(
+    title = glue::glue(
+      "Seasonality of bTB by month (2008-{max(cases_per_month$year)})"
+    ),
+    #add years auto
+    x = "Year",
+    y = "No. of bTB cases"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.background = element_rect(fill = "grey90", color = NA),
+    strip.text = element_text(size = 12, face = "bold"),
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1,
+      face = "bold"
+    )
+  )
+```
+
+# 1.4 STL decomposition of time series
+
+```{r}
+
+# Convert data to tsibble format
+cases_tsibble <- cases_per_month %>%
+  mutate(year_month = yearmonth(year_month)) %>%
+  as_tsibble(index = year_month)
+
+# Apply STL decomposition
+decomp <- cases_tsibble %>%
+  model(STL(num_cases ~ season(window = "periodic"))) %>%
+  components()
+
+# Plot decomposition
+autoplot(decomp) +
+  labs(
+    title = glue::glue("STL Decomposition of bTB Cases (2008–{max(cases_per_month$year)})"),
+    x = "Year",
+    y = "Number of cases"
+  ) +
+  theme_minimal()
+
+```
+
+# 2. Modeling and Forecasting
+
+This section presents the time series modeling and forecasting for bTB cases in Ireland. All models were fitted previously in an external R script and saved for reproducibility (add link)
+
+# 2.1 Forecast vs observed casesg
+
+The figure below compares the 12-month forecast against observed 2024 values.
+
+```{r}
+
+# Load pre-saved forecast plot for 2024
+knitr::include_graphics("figures/forecast_plot.png")
+```
+
+# 2.2 Model comparison
+
+The table summarises model performance. The log-transformed ARIMA achieved the best fit, indicated by lower AIC and error values, and passed the Ljung–Box test.
+
+```{r}
+
+# Load fitted models and cross-validation accuracy
+fit_models <- readRDS("results/fit_models.rds")
+cv_accuracy_summary <- read_csv("results/cv_accuracy_summary.csv")
+
+# Extract model metrics (AIC, BIC, sigma^2)
+metrics <- fit_models %>%
+  glance() %>%
+  select(.model, AIC, BIC, sigma2)
+
+# Combine metrics with cross-validation accuracy
+final_summary <- left_join(metrics, cv_accuracy_summary, by = ".model")
+
+# Perform Ljung-Box test to check residual independence
+res_ets   <- fit_models %>% select(ets)   %>% augment()
+res_ets_log   <- fit_models %>% select(ets_log)   %>% augment()
+res_arima <- fit_models %>% select(arima) %>% augment()
+res_arima_log <- fit_models %>% select(arima_log) %>% augment()
+
+p_values <- tibble(
+  Model = c("ets", "ets_log", "arima", "arima_log"),
+  `p-value Ljung-Box` = c(
+    Box.test(res_ets$.resid, lag = 20, type = "Ljung-Box")$p.value,
+    Box.test(res_ets_log$.resid, lag = 20, type = "Ljung-Box")$p.value,
+    Box.test(res_arima$.resid, lag = 20, type = "Ljung-Box")$p.value,
+    Box.test(res_arima_log$.resid, lag = 20, type = "Ljung-Box")$p.value
+  )
+)
+
+# Merge model metrics with Ljung-Box p-values
+final_table <- head(left_join(final_summary, p_values, by = c(".model" = "Model")),-2)
+
+
+final_table %>%
+ 
+  kable(caption = "Model Comparison Metrics", digits = 2,
+        col.names = c("Model", "AIC", "BIC","sigma2","RMSE", "MAPE", "MAE", "p-value Ljung-Box")) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+Detailed reports for best models (improve format, maybe just get the Arima model details)
+
+```{r}
+
+# Detailed report for the best model (Arima with log transformation)
+fit_models %>% select(arima_log) %>% report()
+```
+
+# 3. Subgroup Analysis {.tabset}
+
+```{r}
+
+# Filter out rows with missing or unknown herd types and test types
+cases_plot <- all_cases_collapsed %>%
+  filter(!is.na(herd_type_ml_description),
+         herd_type_ml_description != "Unknown",
+         !is.na(best_estimate_gif_skin_lab_string)) %>%
+  filter(year != 2025) %>%
+  group_by(year_month, herd_type_ml_description, best_estimate_gif_skin_lab_string) %>%
+  summarise(num_cases = n(), .groups = "drop") %>%
+  mutate(
+    year_month = as.Date(paste0(year_month, "-01")),
+    series_id = paste(herd_type_ml_description, best_estimate_gif_skin_lab_string, sep = "_")
+  ) %>%
+  as.data.frame()  # make sure it's a regular data.frame for ggplot
+```
+
+
+### By Herd Type and Test Type
+
+```{r}
+# Plot bTB cases by herd type and test type
+ggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +
+  geom_line(size = 1) +
+  geom_point(size = 1) +
+  facet_grid(herd_type_ml_description ~ best_estimate_gif_skin_lab_string, scales = "free_y") +
+  labs(
+    title = "bTB Cases by Herd Type and Test Type",
+    x = "Month",
+    y = "Number of cases"
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    legend.position = "none"  # remove legend
+  )
+
+```
+
+### By Herd Type (Aggregated)
+
+```{r}
+# Prepare herd-level data for hierarchical modeling
+# - Filter only relevant herd types
+# - Combine "Beef Store" and "Fattener" into a single category
+# - Fill gaps with zeros for months without cases
+
+cases_herd <- all_cases_collapsed %>%
+  filter(!is.na(herd_type_ml_description),
+         herd_type_ml_description != "Unknown",
+         herd_type_ml_description %in% c("Dairy", "Beef Store", "Fattener", "Mixed"),
+         !is.na(best_estimate_gif_skin_lab_string)) %>%
+  mutate(
+    herd_type_ml_description = case_when(
+      herd_type_ml_description %in% c("Beef Store", "Fattener") ~ "Beef Store + Fattener",
+      TRUE ~ herd_type_ml_description
+    ),
+    year_month = yearmonth(paste0(year_month, "-01"))
+  ) %>%
+  group_by(year_month, herd_type_ml_description) %>%
+  summarise(num_cases = n(), .groups = "drop") %>%
+  as_tsibble(index = year_month, key = herd_type_ml_description) %>%
+  fill_gaps(num_cases = 0)
+
+# Plot overall herd-level trends
+
+cases_plot <- cases_herd %>%
+  as_tibble() %>%
+  mutate(series_id = herd_type_ml_description)
+
+ggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +
+  geom_line(size = 1) +
+  geom_point(size = 1) +
+  labs(title = "bTB Cases by Herd Type", x = "Month", y = "Number of cases") +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+## 3.2 Hierarchical modeling and reconciliation
+
+Hierarchical forecasting ensures that subgroup forecasts (by herd type) add up consistently to the total forecast.
+
+```{r}
+
+# Split training data up to Dec 2023
+train_2023 <- cases_herd %>% filter(year_month <= yearmonth("2023 Dec"))
+
+# Create hierarchical structure for forecasting
+cases_hierarchy_train <- train_2023 %>%
+  aggregate_key(herd_type_ml_description, num_cases = sum(num_cases))
+
+# Fit ARIMA models and reconcile forecasts
+fit_reconciled_train <- cases_hierarchy_train %>%
+  model(
+    arima_log = ARIMA(log(num_cases))
+  ) %>%
+  reconcile(
+    bu   = bottom_up(arima_log),
+    ols  = min_trace(arima_log, method = "ols"),
+    mint = min_trace(arima_log, method = "mint_shrink")
+  )
+
+# Forecast 12 months for 2024
+fc_2024 <- fit_reconciled_train %>% forecast(h = "12 months")
+
+# Prepare actual data and aggregate total series for comparison
+actual_2024 <- cases_herd %>%
+  filter(year_month >= yearmonth("2024 Jan") & year_month <= yearmonth("2024 Dec"))
+
+total_2024 <- actual_2024 %>%
+  as_tibble() %>%                        
+  group_by(year_month) %>%
+  summarise(num_cases = sum(num_cases), .groups = "drop") %>%
+  mutate(herd_type_ml_description = "Total") %>%
+  as_tsibble(index = year_month, key = herd_type_ml_description)
+
+actual_2024_full <- bind_rows(actual_2024, total_2024) %>%
+  as_tsibble(index = year_month, key = herd_type_ml_description)
+
+#rename aggregated as "Total"
+cases_hierarchy <- cases_hierarchy_train %>%
+  as_tibble() %>%
+  mutate(
+    herd_type_ml_description = ifelse(
+      is_aggregated(herd_type_ml_description), 
+      "Total", 
+      as.character(herd_type_ml_description)
+    )
+  ) %>%
+  as_tsibble(index = year_month, key = herd_type_ml_description)
+
+fc_2024 <- fc_2024 %>%
+  mutate(
+    herd_type_ml_description = ifelse(
+      is_aggregated(herd_type_ml_description),
+      "Total",
+      as.character(herd_type_ml_description)
+    )
+  )
+
+```
+
+## 3.3 Plot por tipo de herd
+
+```{r}
+
+# Set factor levels so "Total" appears first
+fc_2024 <- fc_2024 %>%
+  mutate(
+    herd_type_ml_description = factor(
+      herd_type_ml_description,
+      levels = c("Total", sort(setdiff(unique(herd_type_ml_description), "Total")))
+    )
+  )
+
+cases_hierarchy <- cases_hierarchy %>%
+  mutate(
+    herd_type_ml_description = factor(
+      herd_type_ml_description,
+      levels = c("Total", sort(setdiff(unique(herd_type_ml_description), "Total")))
+    )
+  )
+
+# Plot forecasts for each herd type
+autoplot(fc_2024, cases_hierarchy, level = NULL) +
+  labs(
+    title = "Forecast by Herd Type (incl. Total)",
+    y = "Number of cases"
+  ) +
+  theme_minimal() +
+  facet_wrap(~herd_type_ml_description, scales = "fixed") +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    plot.margin = margin(t = 20, r = 20, b = 20, l = 20)
+  )
+
+```
+
+## 3.3 Forecast accuracy by subgroup
+
+The table below reports RMSE and MAE by herd type for 2024 forecasts. Accuracy is highest for Dairy herds and lower for mixed herds.
+
+```{r}
+
+# Calculate accuracy metrics (RMSE and MAE) for 2024 forecasts
+accuracy_2024 <- fc_2024 %>%
+  accuracy(data = actual_2024_full) %>%
+  mutate(
+    Level = herd_type_ml_description
+  ) %>%
+  select(.model, Level, RMSE, MAE)
+
+# Arrange table and display with styling
+accuracy_2024 %>%
+  mutate(Level = if_else(Level == "Total", "Total", Level)) %>%
+  select(.model, Level, RMSE, MAE) %>%
+  arrange(factor(Level, levels = c("Total", "Dairy", "Beef Store+Fattener", "Mixed")), RMSE) %>%
+  kable(
+    caption = "Forecast Accuracy Metrics by Herd Type",
+    digits = 2,
+    col.names = c("Model", "Herd Type", "RMSE", "MAE")
+  ) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+
+
+
+```
+
+#4. Summary and Conclusions
