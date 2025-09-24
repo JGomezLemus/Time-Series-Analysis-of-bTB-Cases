@@ -137,7 +137,6 @@ autoplot(decomp) +
 This section presents the time series modeling and forecasting for bTB cases in Ireland. All models were fitted previously in an external R script and saved for reproducibility (add link)
 
 ::: panel-tabset
-
 # 2.1 Forecast vs Observed Cases
 
 The figure below compares the 12-month forecast against observed 2024 values.
@@ -253,15 +252,18 @@ forecast_plot_long_interactive
 ```
 :::
 
-Detailed reports for best models (improve format, maybe just get the Arima model details)
+#2.4 Detailed reports for best models
 
 ```{r}
 
 # Detailed report for the best model (Arima with log transformation)
-fit_models %>% select(arima_log) %>% report()
-```
+model_info <- fit_models %>% select(arima_log) %>% report()
 
-# 3. Subgroup Analysis {.tabset}
+
+```
+The best-performing model for the monthly case series was a `r model_info` model. 
+
+# 3. Subgroup Analysis 
 
 ```{r}
 
