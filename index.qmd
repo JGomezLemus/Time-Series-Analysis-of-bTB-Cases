@@ -6,8 +6,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 
 # Introduction
 
-This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.\ 
-(more details)\
+This project analyses time series patterns of bovine Tuberculosis (bTB) cases in Ireland.  (more details)\
 The main objectives are:\
 1. To describe overall trends and seasonal patterns of bTB incidence.\
 2. To compare different time series forecasting models.\
@@ -137,12 +136,15 @@ autoplot(decomp) +
 
 This section presents the time series modeling and forecasting for bTB cases in Ireland. All models were fitted previously in an external R script and saved for reproducibility (add link)
 
-# 2.1 Forecast vs observed casesg
+::: panel-tabset
+
+# 2.1 Forecast vs Observed Cases
 
 The figure below compares the 12-month forecast against observed 2024 values.
 
 ```{r}
 
+##Forecast vs Observed Cases
 # Load pre-saved forecast plot for 2024
 knitr::include_graphics("figures/forecast_plot.png")
 ```
@@ -192,6 +194,65 @@ final_table %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
+# 2.3 Extended Forecast 2024–2026
+
+```{r}
+
+library(plotly)
+train <- cases_tsibble %>%
+  filter(year_month <= yearmonth("2023 Dec")) 
+#interactive graph
+## Forecast extendido para proyección (2025–2026) ---
+fc_long <- fit_models %>%
+  forecast(h = 36)   # 36 meses desde enero 2024 = 2024–2026
+
+## Plot largo (2024–2026, solo proyección más datos reales) ---
+forecast_plot_long <- autoplot(fc_long, train) +
+  autolayer(cases_tsibble, colour = "black") +
+  labs(title = "Forecast 2024–2026 vs Actual", y = "Cases")
+
+ggsave("figures/forecast_plot_long.png", forecast_plot_long,
+       width = 10, height = 6)
+
+## --- Forecast data ---
+fc_long_clean <- fc_long %>%
+  as_tibble() %>%
+  rename(
+    Model = .model,
+    Cases = .mean,
+    `Year-Month` = year_month
+  )
+
+## --- Observed data ---
+obs_clean <- cases_tsibble %>%
+  as_tibble() %>%
+  rename(
+    `Year-Month` = year_month,
+    Cases = num_cases
+  )
+
+## --- Plot ---
+forecast_plot_long <- ggplot(fc_long_clean, aes(x = `Year-Month`, y = Cases, color = Model)) +
+  geom_line(size = 0.5) +  # grosor más fino para forecast
+  geom_line(data = obs_clean, aes(x = `Year-Month`, y = Cases), color = "black", size = 0.5) +  # Observed en negro
+  scale_y_continuous(limits = c(0, 10000)) +
+  labs(
+    title = "Forecast of Cases 2024–2026",
+    y = "Number of Cases",
+    x = "Year-Month"
+  )
+
+## --- Interactive ---
+forecast_plot_long_interactive <- ggplotly(
+  forecast_plot_long,
+  tooltip = c("Model", "Cases", "Year-Month")
+)
+
+forecast_plot_long_interactive
+
+```
+:::
+
 Detailed reports for best models (improve format, maybe just get the Arima model details)
 
 ```{r}
@@ -218,7 +279,6 @@ cases_plot <- all_cases_collapsed %>%
   ) %>%
   as.data.frame()  # make sure it's a regular data.frame for ggplot
 ```
-
 
 ### By Herd Type and Test Type
 
@@ -281,7 +341,6 @@ ggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +
   theme(strip.text = element_text(face = "bold"),
         axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-
 
 ## 3.2 Hierarchical modeling and reconciliation
 

@@ -57,6 +57,14 @@ test_accuracy_summary <- test_accuracy %>%
   summarise(RMSE = mean(RMSE, na.rm = TRUE), MAPE = mean(MAPE, na.rm = TRUE))
 test_accuracy_summary
 
+## --- 8. Plot largo (2024–2026, solo proyección más datos reales) ---
+forecast_plot_long <- autoplot(fc_long, train) +
+  autolayer(cases_tsibble, colour = "black") +
+  labs(title = "Forecast 2024–2026 vs Actual", y = "Cases")
+
+ggsave("figures/forecast_plot_long.png", forecast_plot_long,
+       width = 10, height = 6)
+
 # ROLLING ORIGIN CROSS-VALIDATION (ROBUST METRICS)----------------------------
 # We use a rolling origin approach to compute out-of-sample accuracy at each step
 
