@@ -28,6 +28,7 @@ fit_models <- train %>%
     arima = ARIMA(num_cases),
     arima_log = ARIMA(log(num_cases)),
     ets = ETS(num_cases),
+    ets_log = ETS(log(num_cases)),
     snaive = SNAIVE(num_cases),
     tslm = TSLM(num_cases ~ trend() + season())
   )
@@ -57,13 +58,55 @@ test_accuracy_summary <- test_accuracy %>%
   summarise(RMSE = mean(RMSE, na.rm = TRUE), MAPE = mean(MAPE, na.rm = TRUE))
 test_accuracy_summary
 
-## --- 8. Plot largo (2024–2026, solo proyección más datos reales) ---
+## Forecast extendido para proyección (2025–2026) ---
+fc_long <- fit_models %>%
+  forecast(h = 36)   # 36 meses desde enero 2024 = 2024–2026
+
+## Plot largo (2024–2026, solo proyección más datos reales) ---
 forecast_plot_long <- autoplot(fc_long, train) +
   autolayer(cases_tsibble, colour = "black") +
   labs(title = "Forecast 2024–2026 vs Actual", y = "Cases")
 
 ggsave("figures/forecast_plot_long.png", forecast_plot_long,
        width = 10, height = 6)
+
+#interactive graph
+
+## --- Forecast data ---
+fc_long_clean <- fc_long %>%
+  as_tibble() %>%
+  rename(
+    Model = .model,
+    Cases = .mean,
+    `Year-Month` = year_month
+  )
+
+## --- Observed data ---
+obs_clean <- cases_tsibble %>%
+  as_tibble() %>%
+  rename(
+    `Year-Month` = year_month,
+    Cases = num_cases
+  )
+
+## --- Plot ---
+forecast_plot_long <- ggplot(fc_long_clean, aes(x = `Year-Month`, y = Cases, color = Model)) +
+  geom_line(size = 0.5) +  # grosor más fino para forecast
+  geom_line(data = obs_clean, aes(x = `Year-Month`, y = Cases), color = "black", size = 0.5) +  # Observed en negro
+  scale_y_continuous(limits = c(0, 10000)) +
+  labs(
+    title = "Forecast of Cases 2024–2026",
+    y = "Number of Cases",
+    x = "Year-Month"
+  )
+
+## --- Interactive ---
+forecast_plot_long_interactive <- ggplotly(
+  forecast_plot_long,
+  tooltip = c("Model", "Cases", "Year-Month")
+)
+
+forecast_plot_long_interactive
 
 # ROLLING ORIGIN CROSS-VALIDATION (ROBUST METRICS)----------------------------
 # We use a rolling origin approach to compute out-of-sample accuracy at each step
@@ -149,7 +192,7 @@ fit_models %>% select(arima_log) %>% report()
 
 
 
-```{r}
+
 # SUBGROUP ANALYSIS-------------------------------------------------------------
 
 #without reconciliatio

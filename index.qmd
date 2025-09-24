@@ -43,7 +43,7 @@ source("R_files/02_data.R")
 
 ```
 
-# 1.2 General trend of bTB cases
+## 1.2 General trend of bTB cases
 
 This figure shows the overall monthly trend of bTB cases. A declining pattern is observed until 2015, followed by an increase from 2018 onward.
 
@@ -61,9 +61,11 @@ ggplot(cases_per_month, aes(x = year_month, y = num_cases)) +
   labs(title = "Trend bTB Cases", x = "Month", y = "Number of cases") +
   theme_minimal()
 
+
+
 ```
 
-# 1.3 Seasonality by month
+## 1.3 Seasonality by month
 
 This visualization highlights seasonal variation by month across years.
 
@@ -107,7 +109,7 @@ ggplot(cases_per_month, aes(x = year, y = num_cases, group = 1)) +
   )
 ```
 
-# 1.4 STL decomposition of time series
+## 1.4 STL decomposition of time series
 
 ```{r}
 
@@ -137,7 +139,7 @@ autoplot(decomp) +
 This section presents the time series modeling and forecasting for bTB cases in Ireland. All models were fitted previously in an external R script and saved for reproducibility (add link)
 
 ::: panel-tabset
-# 2.1 Forecast vs Observed Cases
+## 2.1 Forecast vs Observed Cases
 
 The figure below compares the 12-month forecast against observed 2024 values.
 
@@ -148,7 +150,7 @@ The figure below compares the 12-month forecast against observed 2024 values.
 knitr::include_graphics("figures/forecast_plot.png")
 ```
 
-# 2.2 Model comparison
+## 2.2 Model comparison
 
 The table summarises model performance. The log-transformed ARIMA achieved the best fit, indicated by lower AIC and error values, and passed the Ljung–Box test.
 
@@ -193,7 +195,7 @@ final_table %>%
   kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
 ```
 
-# 2.3 Extended Forecast 2024–2026
+## 2.3 Extended Forecast 2024–2026
 
 ```{r}
 
@@ -252,7 +254,7 @@ forecast_plot_long_interactive
 ```
 :::
 
-#2.4 Detailed reports for best models
+## 2.4 Detailed reports for best model
 
 ```{r}
 
@@ -261,9 +263,10 @@ model_info <- fit_models %>% select(arima_log) %>% report()
 
 
 ```
-The best-performing model for the monthly case series was a `r model_info` model. 
 
-# 3. Subgroup Analysis 
+The best-performing model for the monthly case series was a `r model_info` model.
+
+# 3. Subgroup Analysis
 
 ```{r}
 
@@ -282,7 +285,7 @@ cases_plot <- all_cases_collapsed %>%
   as.data.frame()  # make sure it's a regular data.frame for ggplot
 ```
 
-### By Herd Type and Test Type
+## 3.1 By Herd Type and Test Type
 
 ```{r}
 # Plot bTB cases by herd type and test type
@@ -304,7 +307,7 @@ ggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +
 
 ```
 
-### By Herd Type (Aggregated)
+## 3.2 By Herd Type (Aggregated)
 
 ```{r}
 # Prepare herd-level data for hierarchical modeling
@@ -344,7 +347,7 @@ ggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +
         axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-## 3.2 Hierarchical modeling and reconciliation
+## 3.3 Hierarchical modeling and reconciliation
 
 Hierarchical forecasting ensures that subgroup forecasts (by herd type) add up consistently to the total forecast.
 
@@ -408,7 +411,7 @@ fc_2024 <- fc_2024 %>%
 
 ```
 
-## 3.3 Plot por tipo de herd
+## 3.4 Plot por tipo de herd
 
 ```{r}
 
@@ -445,7 +448,7 @@ autoplot(fc_2024, cases_hierarchy, level = NULL) +
 
 ```
 
-## 3.3 Forecast accuracy by subgroup
+## 3.5 Forecast accuracy by subgroup
 
 The table below reports RMSE and MAE by herd type for 2024 forecasts. Accuracy is highest for Dairy herds and lower for mixed herds.
 
@@ -474,5 +477,3 @@ accuracy_2024 %>%
 
 
 ```
-
-#4. Summary and Conclusions

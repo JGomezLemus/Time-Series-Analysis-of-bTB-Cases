@@ -15,3 +15,7 @@ library(fabletools) #Tools for fable models
 library(knitr)
 library(kableExtra)
 library(ggiraph)   #Interactive visualizations
+
+library(quartabs)
+library(plotly)
+library(glue)
