@@ -411,7 +411,7 @@ fc_2024 <- fc_2024 %>%
 
 ```
 
-## 3.4 Plot por tipo de herd
+## 3.4 Plot por tipo de herd 
 
 ```{r}
 
