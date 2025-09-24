@@ -40,11 +40,71 @@
     ]
   },
   {
+    "objectID": "index.html#general-trend-of-btb-cases",
+    "href": "index.html#general-trend-of-btb-cases",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "1.2 General trend of bTB cases",
+    "text": "1.2 General trend of bTB cases\nThis figure shows the overall monthly trend of bTB cases. A declining pattern is observed until 2015, followed by an increase from 2018 onward.\n\n\nCode\n# Calculate average number of cases per month\navg_per_month &lt;- cases_per_month %&gt;%\n  group_by(month) %&gt;%\n  summarise(avg_cases = mean(num_cases), .groups = \"drop\")\n\n# Plot overall trend of bTB cases over time\nggplot(cases_per_month, aes(x = year_month, y = num_cases)) +\n  geom_line() +\n  geom_point() +\n  labs(title = \"Trend bTB Cases\", x = \"Month\", y = \"Number of cases\") +\n  theme_minimal()",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#seasonality-by-month",
+    "href": "index.html#seasonality-by-month",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "1.3 Seasonality by month",
+    "text": "1.3 Seasonality by month\nThis visualization highlights seasonal variation by month across years.\n\n\nCode\ncases_per_month &lt;- cases_per_month %&gt;%\n  mutate(month = factor(month, levels = 1:12, labels = month.abb))\n\navg_per_month &lt;- avg_per_month %&gt;%\n  mutate(month = factor(month, levels = 1:12, labels = month.abb))\n\n\n# Plot seasonality of bTB cases by month\nggplot(cases_per_month, aes(x = year, y = num_cases, group = 1)) +\n  geom_line() +\n  geom_point(size = 1) +\n  geom_hline(\n    data = avg_per_month,\n    aes(yintercept = avg_cases),\n    linetype = \"solid\",\n    color = \"blue\"\n  ) +\n  facet_grid(. ~ month, scales = \"free_x\", space = \"free\") +\n  labs(\n    title = glue::glue(\n      \"Seasonality of bTB by month (2008-{max(cases_per_month$year)})\"\n    ),\n    #add years auto\n    x = \"Year\",\n    y = \"No. of bTB cases\"\n  ) +\n  theme_minimal() +\n  theme(\n    strip.background = element_rect(fill = \"grey90\", color = NA),\n    strip.text = element_text(size = 12, face = \"bold\"),\n    axis.text.x = element_text(\n      angle = 90,\n      hjust = 1,\n      face = \"bold\"\n    )\n  )",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#stl-decomposition-of-time-series",
+    "href": "index.html#stl-decomposition-of-time-series",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "1.4 STL decomposition of time series",
+    "text": "1.4 STL decomposition of time series\n\n\nCode\n# Convert data to tsibble format\ncases_tsibble &lt;- cases_per_month %&gt;%\n  mutate(year_month = yearmonth(year_month)) %&gt;%\n  as_tsibble(index = year_month)\n\n# Apply STL decomposition\ndecomp &lt;- cases_tsibble %&gt;%\n  model(STL(num_cases ~ season(window = \"periodic\"))) %&gt;%\n  components()\n\n# Plot decomposition\nautoplot(decomp) +\n  labs(\n    title = glue::glue(\"STL Decomposition of bTB Cases (2008–{max(cases_per_month$year)})\"),\n    x = \"Year\",\n    y = \"Number of cases\"\n  ) +\n  theme_minimal()",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#detailed-reports-for-best-model",
+    "href": "index.html#detailed-reports-for-best-model",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "2.4 Detailed reports for best model",
+    "text": "2.4 Detailed reports for best model\n\n\nCode\n# Detailed report for the best model (Arima with log transformation)\nmodel_info &lt;- fit_models %&gt;% select(arima_log) %&gt;% report()\n\n\nSeries: num_cases \nModel: ARIMA(1,1,1)(0,1,1)[12] \nTransformation: log(num_cases) \n\nCoefficients:\n          ar1      ma1     sma1\n      -0.1065  -0.6149  -0.6371\ns.e.   0.1267   0.1114   0.0667\n\nsigma^2 estimated as 0.02219:  log likelihood=84.91\nAIC=-161.83   AICc=-161.6   BIC=-149.08\n\n\nThe best-performing model for the monthly case series was a &lt;ARIMA(1,1,1)(0,1,1)[12]&gt; model.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#by-herd-type-and-test-type",
+    "href": "index.html#by-herd-type-and-test-type",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "3.1 By Herd Type and Test Type",
+    "text": "3.1 By Herd Type and Test Type\n\n\nCode\n# Plot bTB cases by herd type and test type\nggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +\n  geom_line(size = 1) +\n  geom_point(size = 1) +\n  facet_grid(herd_type_ml_description ~ best_estimate_gif_skin_lab_string, scales = \"free_y\") +\n  labs(\n    title = \"bTB Cases by Herd Type and Test Type\",\n    x = \"Month\",\n    y = \"Number of cases\"\n  ) +\n  theme_minimal() +\n  theme(\n    strip.text = element_text(face = \"bold\"),\n    axis.text.x = element_text(angle = 90, hjust = 1),\n    legend.position = \"none\"  # remove legend\n  )",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "index.html#by-herd-type-aggregated",
+    "href": "index.html#by-herd-type-aggregated",
+    "title": "Time Series Analysis of bTB Cases in Ireland",
+    "section": "3.2 By Herd Type (Aggregated)",
+    "text": "3.2 By Herd Type (Aggregated)\n\n\nCode\n# Prepare herd-level data for hierarchical modeling\n# - Filter only relevant herd types\n# - Combine \"Beef Store\" and \"Fattener\" into a single category\n# - Fill gaps with zeros for months without cases\n\ncases_herd &lt;- all_cases_collapsed %&gt;%\n  filter(!is.na(herd_type_ml_description),\n         herd_type_ml_description != \"Unknown\",\n         herd_type_ml_description %in% c(\"Dairy\", \"Beef Store\", \"Fattener\", \"Mixed\"),\n         !is.na(best_estimate_gif_skin_lab_string)) %&gt;%\n  mutate(\n    herd_type_ml_description = case_when(\n      herd_type_ml_description %in% c(\"Beef Store\", \"Fattener\") ~ \"Beef Store + Fattener\",\n      TRUE ~ herd_type_ml_description\n    ),\n    year_month = yearmonth(paste0(year_month, \"-01\"))\n  ) %&gt;%\n  group_by(year_month, herd_type_ml_description) %&gt;%\n  summarise(num_cases = n(), .groups = \"drop\") %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description) %&gt;%\n  fill_gaps(num_cases = 0)\n\n# Plot overall herd-level trends\n\ncases_plot &lt;- cases_herd %&gt;%\n  as_tibble() %&gt;%\n  mutate(series_id = herd_type_ml_description)\n\nggplot(cases_plot, aes(x = year_month, y = num_cases, color = series_id)) +\n  geom_line(size = 1) +\n  geom_point(size = 1) +\n  labs(title = \"bTB Cases by Herd Type\", x = \"Month\", y = \"Number of cases\") +\n  theme_minimal() +\n  theme(strip.text = element_text(face = \"bold\"),\n        axis.text.x = element_text(angle = 90, hjust = 1))",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
     "objectID": "index.html#hierarchical-modeling-and-reconciliation",
     "href": "index.html#hierarchical-modeling-and-reconciliation",
     "title": "Time Series Analysis of bTB Cases in Ireland",
-    "section": "3.2 Hierarchical modeling and reconciliation",
-    "text": "3.2 Hierarchical modeling and reconciliation\nHierarchical forecasting ensures that subgroup forecasts (by herd type) add up consistently to the total forecast.\n\n\nCode\n# Split training data up to Dec 2023\ntrain_2023 &lt;- cases_herd %&gt;% filter(year_month &lt;= yearmonth(\"2023 Dec\"))\n\n# Create hierarchical structure for forecasting\ncases_hierarchy_train &lt;- train_2023 %&gt;%\n  aggregate_key(herd_type_ml_description, num_cases = sum(num_cases))\n\n# Fit ARIMA models and reconcile forecasts\nfit_reconciled_train &lt;- cases_hierarchy_train %&gt;%\n  model(\n    arima_log = ARIMA(log(num_cases))\n  ) %&gt;%\n  reconcile(\n    bu   = bottom_up(arima_log),\n    ols  = min_trace(arima_log, method = \"ols\"),\n    mint = min_trace(arima_log, method = \"mint_shrink\")\n  )\n\n# Forecast 12 months for 2024\nfc_2024 &lt;- fit_reconciled_train %&gt;% forecast(h = \"12 months\")\n\n# Prepare actual data and aggregate total series for comparison\nactual_2024 &lt;- cases_herd %&gt;%\n  filter(year_month &gt;= yearmonth(\"2024 Jan\") & year_month &lt;= yearmonth(\"2024 Dec\"))\n\ntotal_2024 &lt;- actual_2024 %&gt;%\n  as_tibble() %&gt;%                        \n  group_by(year_month) %&gt;%\n  summarise(num_cases = sum(num_cases), .groups = \"drop\") %&gt;%\n  mutate(herd_type_ml_description = \"Total\") %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\nactual_2024_full &lt;- bind_rows(actual_2024, total_2024) %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\n#rename aggregated as \"Total\"\ncases_hierarchy &lt;- cases_hierarchy_train %&gt;%\n  as_tibble() %&gt;%\n  mutate(\n    herd_type_ml_description = ifelse(\n      is_aggregated(herd_type_ml_description), \n      \"Total\", \n      as.character(herd_type_ml_description)\n    )\n  ) %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\nfc_2024 &lt;- fc_2024 %&gt;%\n  mutate(\n    herd_type_ml_description = ifelse(\n      is_aggregated(herd_type_ml_description),\n      \"Total\",\n      as.character(herd_type_ml_description)\n    )\n  )",
+    "section": "3.3 Hierarchical modeling and reconciliation",
+    "text": "3.3 Hierarchical modeling and reconciliation\nHierarchical forecasting ensures that subgroup forecasts (by herd type) add up consistently to the total forecast.\n\n\nCode\n# Split training data up to Dec 2023\ntrain_2023 &lt;- cases_herd %&gt;% filter(year_month &lt;= yearmonth(\"2023 Dec\"))\n\n# Create hierarchical structure for forecasting\ncases_hierarchy_train &lt;- train_2023 %&gt;%\n  aggregate_key(herd_type_ml_description, num_cases = sum(num_cases))\n\n# Fit ARIMA models and reconcile forecasts\nfit_reconciled_train &lt;- cases_hierarchy_train %&gt;%\n  model(\n    arima_log = ARIMA(log(num_cases))\n  ) %&gt;%\n  reconcile(\n    bu   = bottom_up(arima_log),\n    ols  = min_trace(arima_log, method = \"ols\"),\n    mint = min_trace(arima_log, method = \"mint_shrink\")\n  )\n\n# Forecast 12 months for 2024\nfc_2024 &lt;- fit_reconciled_train %&gt;% forecast(h = \"12 months\")\n\n# Prepare actual data and aggregate total series for comparison\nactual_2024 &lt;- cases_herd %&gt;%\n  filter(year_month &gt;= yearmonth(\"2024 Jan\") & year_month &lt;= yearmonth(\"2024 Dec\"))\n\ntotal_2024 &lt;- actual_2024 %&gt;%\n  as_tibble() %&gt;%                        \n  group_by(year_month) %&gt;%\n  summarise(num_cases = sum(num_cases), .groups = \"drop\") %&gt;%\n  mutate(herd_type_ml_description = \"Total\") %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\nactual_2024_full &lt;- bind_rows(actual_2024, total_2024) %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\n#rename aggregated as \"Total\"\ncases_hierarchy &lt;- cases_hierarchy_train %&gt;%\n  as_tibble() %&gt;%\n  mutate(\n    herd_type_ml_description = ifelse(\n      is_aggregated(herd_type_ml_description), \n      \"Total\", \n      as.character(herd_type_ml_description)\n    )\n  ) %&gt;%\n  as_tsibble(index = year_month, key = herd_type_ml_description)\n\nfc_2024 &lt;- fc_2024 %&gt;%\n  mutate(\n    herd_type_ml_description = ifelse(\n      is_aggregated(herd_type_ml_description),\n      \"Total\",\n      as.character(herd_type_ml_description)\n    )\n  )",
     "crumbs": [
       "Introduction"
     ]
@@ -53,8 +113,8 @@
     "objectID": "index.html#plot-por-tipo-de-herd",
     "href": "index.html#plot-por-tipo-de-herd",
     "title": "Time Series Analysis of bTB Cases in Ireland",
-    "section": "3.3 Plot por tipo de herd",
-    "text": "3.3 Plot por tipo de herd\n\n\nCode\n# Set factor levels so \"Total\" appears first\nfc_2024 &lt;- fc_2024 %&gt;%\n  mutate(\n    herd_type_ml_description = factor(\n      herd_type_ml_description,\n      levels = c(\"Total\", sort(setdiff(unique(herd_type_ml_description), \"Total\")))\n    )\n  )\n\ncases_hierarchy &lt;- cases_hierarchy %&gt;%\n  mutate(\n    herd_type_ml_description = factor(\n      herd_type_ml_description,\n      levels = c(\"Total\", sort(setdiff(unique(herd_type_ml_description), \"Total\")))\n    )\n  )\n\n# Plot forecasts for each herd type\nautoplot(fc_2024, cases_hierarchy, level = NULL) +\n  labs(\n    title = \"Forecast by Herd Type (incl. Total)\",\n    y = \"Number of cases\"\n  ) +\n  theme_minimal() +\n  facet_wrap(~herd_type_ml_description, scales = \"fixed\") +\n  theme(\n    strip.text = element_text(face = \"bold\", size = 12),\n    axis.text.x = element_text(angle = 90, hjust = 1),\n    plot.margin = margin(t = 20, r = 20, b = 20, l = 20)\n  )",
+    "section": "3.4 Plot por tipo de herd",
+    "text": "3.4 Plot por tipo de herd\n\n\nCode\n# Set factor levels so \"Total\" appears first\nfc_2024 &lt;- fc_2024 %&gt;%\n  mutate(\n    herd_type_ml_description = factor(\n      herd_type_ml_description,\n      levels = c(\"Total\", sort(setdiff(unique(herd_type_ml_description), \"Total\")))\n    )\n  )\n\ncases_hierarchy &lt;- cases_hierarchy %&gt;%\n  mutate(\n    herd_type_ml_description = factor(\n      herd_type_ml_description,\n      levels = c(\"Total\", sort(setdiff(unique(herd_type_ml_description), \"Total\")))\n    )\n  )\n\n# Plot forecasts for each herd type\nautoplot(fc_2024, cases_hierarchy, level = NULL) +\n  labs(\n    title = \"Forecast by Herd Type (incl. Total)\",\n    y = \"Number of cases\"\n  ) +\n  theme_minimal() +\n  facet_wrap(~herd_type_ml_description, scales = \"fixed\") +\n  theme(\n    strip.text = element_text(face = \"bold\", size = 12),\n    axis.text.x = element_text(angle = 90, hjust = 1),\n    plot.margin = margin(t = 20, r = 20, b = 20, l = 20)\n  )",
     "crumbs": [
       "Introduction"
     ]
@@ -63,8 +123,8 @@
     "objectID": "index.html#forecast-accuracy-by-subgroup",
     "href": "index.html#forecast-accuracy-by-subgroup",
     "title": "Time Series Analysis of bTB Cases in Ireland",
-    "section": "3.3 Forecast accuracy by subgroup",
-    "text": "3.3 Forecast accuracy by subgroup\nThe table below reports RMSE and MAE by herd type for 2024 forecasts. Accuracy is highest for Dairy herds and lower for mixed herds.\n\n\nCode\n# Calculate accuracy metrics (RMSE and MAE) for 2024 forecasts\naccuracy_2024 &lt;- fc_2024 %&gt;%\n  accuracy(data = actual_2024_full) %&gt;%\n  mutate(\n    Level = herd_type_ml_description\n  ) %&gt;%\n  select(.model, Level, RMSE, MAE)\n\n# Arrange table and display with styling\naccuracy_2024 %&gt;%\n  mutate(Level = if_else(Level == \"Total\", \"Total\", Level)) %&gt;%\n  select(.model, Level, RMSE, MAE) %&gt;%\n  arrange(factor(Level, levels = c(\"Total\", \"Dairy\", \"Beef Store+Fattener\", \"Mixed\")), RMSE) %&gt;%\n  kable(\n    caption = \"Forecast Accuracy Metrics by Herd Type\",\n    digits = 2,\n    col.names = c(\"Model\", \"Herd Type\", \"RMSE\", \"MAE\")\n  ) %&gt;%\n  kable_styling(full_width = FALSE, bootstrap_options = c(\"striped\", \"hover\", \"condensed\"))\n\n\n\nForecast Accuracy Metrics by Herd Type\n\n\nModel\nHerd Type\nRMSE\nMAE\n\n\n\n\nols\nTotal\n351.77\n250.07\n\n\narima_log\nTotal\n352.32\n248.21\n\n\nmint\nTotal\n352.48\n251.64\n\n\nbu\nTotal\n360.90\n266.18\n\n\nmint\nDairy\n322.65\n258.05\n\n\nols\nDairy\n324.81\n260.75\n\n\narima_log\nDairy\n333.70\n270.45\n\n\nbu\nDairy\n333.70\n270.45\n\n\nols\nMixed\n131.73\n87.91\n\n\nmint\nMixed\n131.79\n87.99\n\n\narima_log\nMixed\n133.08\n88.19\n\n\nbu\nMixed\n133.08\n88.19\n\n\nmint\nBeef Store + Fattener\n144.97\n125.77\n\n\narima_log\nBeef Store + Fattener\n145.37\n126.26\n\n\nbu\nBeef Store + Fattener\n145.37\n126.26\n\n\nols\nBeef Store + Fattener\n158.65\n140.24\n\n\n\n\n\n#4. Summary and Conclusions",
+    "section": "3.5 Forecast accuracy by subgroup",
+    "text": "3.5 Forecast accuracy by subgroup\nThe table below reports RMSE and MAE by herd type for 2024 forecasts. Accuracy is highest for Dairy herds and lower for mixed herds.\n\n\nCode\n# Calculate accuracy metrics (RMSE and MAE) for 2024 forecasts\naccuracy_2024 &lt;- fc_2024 %&gt;%\n  accuracy(data = actual_2024_full) %&gt;%\n  mutate(\n    Level = herd_type_ml_description\n  ) %&gt;%\n  select(.model, Level, RMSE, MAE)\n\n# Arrange table and display with styling\naccuracy_2024 %&gt;%\n  mutate(Level = if_else(Level == \"Total\", \"Total\", Level)) %&gt;%\n  select(.model, Level, RMSE, MAE) %&gt;%\n  arrange(factor(Level, levels = c(\"Total\", \"Dairy\", \"Beef Store+Fattener\", \"Mixed\")), RMSE) %&gt;%\n  kable(\n    caption = \"Forecast Accuracy Metrics by Herd Type\",\n    digits = 2,\n    col.names = c(\"Model\", \"Herd Type\", \"RMSE\", \"MAE\")\n  ) %&gt;%\n  kable_styling(full_width = FALSE, bootstrap_options = c(\"striped\", \"hover\", \"condensed\"))\n\n\n\nForecast Accuracy Metrics by Herd Type\n\n\nModel\nHerd Type\nRMSE\nMAE\n\n\n\n\nols\nTotal\n351.77\n250.07\n\n\narima_log\nTotal\n352.32\n248.21\n\n\nmint\nTotal\n352.48\n251.64\n\n\nbu\nTotal\n360.90\n266.18\n\n\nmint\nDairy\n322.65\n258.05\n\n\nols\nDairy\n324.81\n260.75\n\n\narima_log\nDairy\n333.70\n270.45\n\n\nbu\nDairy\n333.70\n270.45\n\n\nols\nMixed\n131.73\n87.91\n\n\nmint\nMixed\n131.79\n87.99\n\n\narima_log\nMixed\n133.08\n88.19\n\n\nbu\nMixed\n133.08\n88.19\n\n\nmint\nBeef Store + Fattener\n144.97\n125.77\n\n\narima_log\nBeef Store + Fattener\n145.37\n126.26\n\n\nbu\nBeef Store + Fattener\n145.37\n126.26\n\n\nols\nBeef Store + Fattener\n158.65\n140.24",
     "crumbs": [
       "Introduction"
     ]
